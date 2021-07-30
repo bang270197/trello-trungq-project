@@ -20,7 +20,7 @@ const bootServer = () => {
     // app.use(express.urlencoded({ extended: true }));
     // app.use(express.json());
     app.get("/test", async (req, res) => {
-        res.send("<h1>Hello</h1>");
+        res.send("<h1>Hello</h1>aaa");
     });
 
     app.listen(env.APP_PORT, env.APP_HOST, () => {
