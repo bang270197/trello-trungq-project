@@ -1,9 +1,10 @@
 import Joi from "joi";
+const { ObjectId } = require("mongodb");
 import { getDB } from "*/config/mongodb.js";
 const cardCollectionName = "cards";
 const cardCollectionSchema = Joi.object({
-    boardId: Joi.string().required(),
-    columnId: Joi.string().required(),
+    boardId: Joi.string().required(), //also ObjectId when create new
+    columnId: Joi.string().required(), //also ObjectId when create new
     title: Joi.string().required().min(3).max(20).trim(),
     cover: Joi.string().default(null),
     createAt: Joi.date().timestamp().default(Date.now()),
@@ -19,14 +20,19 @@ const validateSchema = async (data) => {
 
 const createNew = async (data) => {
     try {
-        const value = await validateSchema(data);
+        const validateValue = await validateSchema(data);
+        const insetValue = {
+            ...validateValue,
+            boardId: ObjectId(validateValue.boardId),
+            columnId: ObjectId(validateValue.columnId),
+        };
         const result = await getDB()
             .collection(cardCollectionName)
-            .insertOne(value);
-        return result;
+            .insertOne(insetValue);
+        return insetValue;
     } catch (error) {
         throw new Error(error);
     }
 };
 
-export const CardModel = { createNew };
+export const CardModel = { cardCollectionName, createNew };

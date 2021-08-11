@@ -10,4 +10,6 @@ router
     // })
     .post(BoardValidation.createNew, BoardController.createNew);
 
+router.route("/:id").get(BoardController.getFullBoard);
+
 export const boardsRoutes = router;

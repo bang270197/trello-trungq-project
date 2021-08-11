@@ -1,5 +1,8 @@
 import Joi from "joi";
 import { getDB } from "*/config/mongodb.js";
+import { ColumnModel } from "./column.model";
+import { CardModel } from "./card.model";
+const { ObjectId } = require("mongodb");
 const boardCollectionName = "boards";
 const boardCollectionSchema = Joi.object({
     title: Joi.string().required().min(3).max(20).trim(),
@@ -21,10 +24,86 @@ const createNew = async (data) => {
         const result = await getDB()
             .collection(boardCollectionName)
             .insertOne(value);
-        return result;
+        return await getDB()
+            .collection(boardCollectionName)
+            .findOne({
+                _id: ObjectId(value._id),
+            });
     } catch (error) {
         throw new Error(error);
     }
 };
 
-export const BoardModel = { createNew };
+/**
+ *
+ * @param {string} boardId
+ * @param {string} newColumnId
+ * @returns
+ */
+const pushColumnOrder = async (boardId, columnId) => {
+    try {
+        const result = await getDB()
+            .collection(boardCollectionName)
+            .findOneAndUpdate(
+                {
+                    _id: ObjectId(boardId),
+                },
+                {
+                    $push: {
+                        columnOrder: columnId,
+                    },
+                },
+                { returnOriginal: false }
+            );
+        return await getDB()
+            .collection(boardCollectionName)
+            .findOne({
+                _id: ObjectId(boardId),
+            });
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+const getFullBoard = async (boardId) => {
+    try {
+        const result = await getDB()
+            .collection(boardCollectionName)
+            .aggregate([
+                {
+                    $match: {
+                        _id: ObjectId(boardId),
+                    },
+                },
+                // {
+                //     $addFields: {
+                //         _id: {
+                //             $toString: "$_id",
+                //         },
+                //     },
+                // },
+                {
+                    $lookup: {
+                        from: ColumnModel.columnCollectionName,
+                        localField: "_id",
+                        foreignField: "boardId",
+                        as: "columns",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: CardModel.cardCollectionName,
+                        localField: "_id",
+                        foreignField: "boardId",
+                        as: "cards",
+                    },
+                },
+            ])
+            .toArray();
+        return result[0] || {};
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+export const BoardModel = { createNew, getFullBoard, pushColumnOrder };

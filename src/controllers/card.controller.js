@@ -2,7 +2,6 @@ import { CardService } from "*/services/card.service";
 import { HttpStatusCode } from "*/utilities/constants";
 const createNew = async (req, res) => {
     try {
-        console.log("controller");
         const result = await CardService.createNew(req.body);
         res.status(HttpStatusCode.OK).json(result);
     } catch (error) {
